@@ -1,12 +1,12 @@
 pipeline {
   agent any
   stages {
-    stage('Clone down') {
+    stage ('Clone down') {
       agent {
-        label 'swarm'
+        label 'master-label'
       }
       steps {
-        stash name: 'code', excludes: '.git/'
+        stash excludes: '.git/', name: 'code'
       }
     }
     stage('Parallel ') {
@@ -16,14 +16,17 @@ pipeline {
             sh 'echo \'Hello\''
           }
         }
-
         stage('build app') {
           agent {
             docker {
               image 'gradle:6-jdk11'
             }
           }
+          options {
+            skipDefaultCheckout true
+          }
           steps {
+            unstash name: 'code'
             sh 'ci/build-app.sh'
             archiveArtifacts 'app/build/libs/'
             sh 'ls -la'
