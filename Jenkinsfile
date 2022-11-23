@@ -1,5 +1,8 @@
 pipeline {
   agent any
+  environment {
+    docker_username = 'alesed'  
+  }      
   stages {
     stage ('Clone down') {
       agent {
@@ -29,13 +32,21 @@ pipeline {
             unstash name: 'code'
             sh 'ci/build-app.sh'
             archiveArtifacts 'app/build/libs/'
-            sh 'ls -la'
-            deleteDir()
-            sh 'ls -la'
           }
         }
 
       }
+    }
+    stage('Push to docker') {
+        environment {
+           DOCKERCREDS = credentials('docker-login') //use the credentials just created in this stage
+        }
+        steps {
+          unstash 'code' //unstash the repository code
+          sh 'ci/build-docker.sh'
+          sh 'echo "$DOCKERCREDS_PSW" | docker login -u "$DOCKERCREDS_USR" --password-stdin' //login to docker hub with the credentials above
+          sh 'ci/push-docker.sh'
+        }
     }
 
   }
