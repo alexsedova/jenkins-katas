@@ -1,6 +1,14 @@
 pipeline {
   agent any
   stages {
+    stage('Clone down') {
+      agent {
+        label 'swarm'
+      }
+      steps {
+        stash name: 'code', excludes: '.git/'
+      }
+    }
     stage('Parallel ') {
       parallel {
         stage('Say hello') {
@@ -14,7 +22,6 @@ pipeline {
             docker {
               image 'gradle:6-jdk11'
             }
-
           }
           steps {
             sh 'ci/build-app.sh'
